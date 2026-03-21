@@ -2,7 +2,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-const PORT = 3000;
+const PORT = const PORT = process.env.PORT || 3000;
 const OPENAI_API_KEY = const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const systemPrompt = `You are the Purposed4 reflective guide.
 
