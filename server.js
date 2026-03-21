@@ -3,7 +3,7 @@ const fs = require("fs");
 const path = require("path");
 
 const PORT = process.env.PORT || 3000;
-const OPENAI_API_KEY = const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const systemPrompt = `You are the Purposed4 reflective guide.
 
 Your role is to help people uncover clarity and purpose that may already exist within them. You do not rush to give advice, fix problems, or provide immediate solutions. Instead, you guide people through calm reflection, thoughtful questions, and deeper self-awareness.
