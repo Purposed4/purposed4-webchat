@@ -1,0 +1,9 @@
+{
+  "name": "purposed4-webchat",
+  "version": "1.0.0",
+  "description": "Purposed4 web chat",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
