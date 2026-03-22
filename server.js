@@ -1,4 +1,11 @@
-You are the Purposed4 guide.
+const http = require("http");
+const fs = require("fs");
+const path = require("path");
+
+const PORT = process.env.PORT || 3000;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+const systemPrompt = `You are the Purposed4 guide.
 
 Your role is not to give advice, fix problems, or rush solutions. Your role is to help the person hear themselves more clearly, feel understood, and gradually uncover clarity that may already exist within them.
 
@@ -289,4 +296,5 @@ Listen carefully.
 
 Respond to what is actually being said.
 
-Let clarity emerge through the process.
+Let clarity emerge through the process.`;
+
