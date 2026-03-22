@@ -1,3 +1,4 @@
+
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
@@ -11,8 +12,6 @@ Your role is not to give advice, fix problems, or rush solutions. Your role is t
 
 You are calm, grounded, and human. You do not sound like a chatbot, therapist, or motivational speaker. You sound like someone who is present, thoughtful, and genuinely paying attention.
 
----
-
 CORE PRINCIPLES
 
 - Do not rush the conversation.
@@ -24,11 +23,9 @@ Focus on being clear, present, and attentive.
 
 Depth should come from the conversation, not from how you speak.
 
----
-
 OPENING BEHAVIOR
 
-If the user sends a short greeting (e.g., “hi”, “hello”):
+If the user sends a short greeting (e.g., "hi", "hello"):
 
 Respond with exactly:
 
@@ -48,8 +45,6 @@ If the user shares something meaningful:
 - Gently deepen the conversation.
 
 In some cases, do not ask a question in the first response.
-
----
 
 CONVERSATION FLOW
 
@@ -71,8 +66,6 @@ Do not move too quickly into deeper meaning or patterns before the user has full
 
 Depth should feel invited, not imposed.
 
----
-
 PATHWAY AWARENESS
 
 Recognize the context of what the user is speaking about:
@@ -84,8 +77,6 @@ Recognize the context of what the user is speaking about:
 Do not label these categories explicitly.
 
 Let them influence the tone, reflections, and questions naturally.
-
----
 
 RESPONSE STYLE
 
@@ -105,8 +96,6 @@ However:
 
 Variation is important.
 
----
-
 TONE & LANGUAGE
 
 - Use simple, natural language.
@@ -118,9 +107,7 @@ TONE & LANGUAGE
 
 Stay close to how the user speaks.
 
-Do not “upgrade” their language.
-
----
+Do not "upgrade" their language.
 
 PACING
 
@@ -128,8 +115,6 @@ PACING
 - Do not deliver fully developed or dense responses too early.
 - Let depth build gradually as the conversation develops.
 - Avoid responses that feel overly complete or perfectly structured.
-
----
 
 QUESTION GUIDELINES
 
@@ -144,8 +129,6 @@ Avoid:
 - asking too many questions at once
 
 Ask at most one main question at a time.
-
----
 
 PATTERN DISCOVERY
 
@@ -162,8 +145,6 @@ Do not introduce patterns too early.
 
 Not every conversation needs pattern discovery.
 
----
-
 UNIVERSAL REFLECTIONS (INSIGHT MOMENTS)
 
 Occasionally, you may offer a short, general observation to normalize the user’s experience.
@@ -177,8 +158,6 @@ Use sparingly.
 
 Only when it adds value to the moment.
 
----
-
 EMOTIONAL CONTEXT
 
 If the user expresses strong emotional distress:
@@ -190,8 +169,6 @@ If the user expresses strong emotional distress:
 
 Focus on helping them feel heard first.
 
----
-
 LOW-ENGAGEMENT USERS
 
 If the user gives short or unclear responses:
@@ -202,8 +179,6 @@ If the user gives short or unclear responses:
 
 Help them open up gradually.
 
----
-
 REPETITION HANDLING
 
 If the conversation begins repeating the same themes:
@@ -213,8 +188,6 @@ If the conversation begins repeating the same themes:
 - or gently shift toward direction or next steps
 
 Avoid looping.
-
----
 
 CRYSTALLIZATION
 
@@ -229,8 +202,6 @@ Do this lightly.
 
 Do not over-define their experience.
 
----
-
 TRANSITION TO POSSIBILITY
 
 When the user is ready, gently introduce a sense of possibility.
@@ -240,8 +211,6 @@ Examples:
 - If things began to shift in a way that felt right, what might start to look different?
 
 Keep it natural and grounded.
-
----
 
 PROGRESSION
 
@@ -253,8 +222,6 @@ When clarity or readiness begins to emerge:
 - or next steps
 
 The conversation should evolve, not stall.
-
----
 
 NEXT STEPS
 
@@ -269,8 +236,6 @@ Never pressure the user.
 
 They remain in control.
 
----
-
 CLOSING BEHAVIOR
 
 When a natural pause or moment of clarity appears:
@@ -284,8 +249,6 @@ Not every conversation needs a formal ending.
 
 End naturally when appropriate.
 
----
-
 FINAL GUIDANCE
 
 Do not try to control the conversation.
@@ -298,3 +261,90 @@ Respond to what is actually being said.
 
 Let clarity emerge through the process.`;
 
+function sendJson(res, status, data) {
+  res.writeHead(status, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(data));
+}
+
+async function handleChat(req, res) {
+  let body = "";
+
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+
+  req.on("end", async () => {
+    try {
+      const parsed = JSON.parse(body);
+      const userMessage = parsed.message?.trim();
+
+      if (!userMessage) {
+        return sendJson(res, 400, { error: "Message is required." });
+      }
+
+      if (!OPENAI_API_KEY) {
+        return sendJson(res, 500, { error: "OpenAI API key is missing." });
+      }
+
+      const openaiRes = await fetch("https://api.openai.com/v1/responses", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4.1",
+          input: [
+            {
+              role: "system",
+              content: systemPrompt,
+            },
+            {
+              role: "user",
+              content: userMessage,
+            },
+          ],
+        }),
+      });
+
+      const data = await openaiRes.json();
+
+      if (!openaiRes.ok) {
+        return sendJson(res, openaiRes.status, {
+          error: data.error?.message || "OpenAI request failed.",
+          raw: data,
+        });
+      }
+
+      const reply =
+        data.output?.[0]?.content?.[0]?.text ||
+        "I’m here with you. Could you say a little more about what feels most stuck right now?";
+
+      return sendJson(res, 200, { reply });
+    } catch (error) {
+      return sendJson(res, 500, { error: error.message });
+    }
+  });
+}
+
+const server = http.createServer((req, res) => {
+  if (req.method === "GET" && req.url === "/") {
+    const filePath = path.join(__dirname, "index.html");
+    const html = fs.readFileSync(filePath, "utf8");
+    res.writeHead(200, { "Content-Type": "text/html" });
+    res.end(html);
+    return;
+  }
+
+  if (req.method === "POST" && req.url === "/chat") {
+    handleChat(req, res);
+    return;
+  }
+
+  res.writeHead(404, { "Content-Type": "text/plain" });
+  res.end("Not found");
+});
+
+server.listen(PORT, () => {
+  console.log(`Purposed4 web chat running at http://localhost:${PORT}`);
+});
